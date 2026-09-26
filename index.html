@@ -80,7 +80,10 @@
         
         .btn-edit { background: #f39c12; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 13px; }
         .btn-delete { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 13px; }
-        .btn-excel { background: #27ae60; color: white; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; display: inline-flex; align-items: center; gap: 5px; }
+        
+        /* أزرار الإكسل */
+        .btn-excel { background: #27ae60; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-size:13px; }
+        .btn-import { background: #f39c12; }
 
         .table-responsive { width: 100%; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; min-width: 500px; }
@@ -103,10 +106,10 @@
         <div class="login-card">
             <h2>لمسة كارز 🚗</h2>
             <div class="form-group">
-                <label>أدخل الرمز السري:</label>
-                <input type="password" id="passInput" placeholder="أدخل الرمز السري..." onkeyup="checkEnter(event)">
+                <label>الرمز السري:</label>
+                <input type="password" id="passInput" placeholder="أدخل الرمز للتحقق..." onkeyup="checkEnter(event)">
             </div>
-            <button class="btn-login" onclick="login()">دخول النظام</button>
+            <button class="btn-login" onclick="login()">تسجيل الدخول</button>
         </div>
     </div>
 
@@ -148,10 +151,10 @@
                 </div>
             </div>
 
-            <!-- ب. إدارة المستودع -->
+            <!-- ب. إدارة المستودع (مع أزرار الإكسل) -->
             <div id="inventoryScreen" class="screen">
                 <div class="panel" style="border-left: 5px solid var(--primary);">
-                    <h2 style="color: var(--primary); margin-bottom: 15px; font-size: 18px;" id="formTitle">إضافة صنف جديد للمخزون</h2>
+                    <h2 style="color: var(--primary); margin-bottom: 15px; font-size: 18px;" id="formTitle">إضافة صنف يدوياً للمخزون</h2>
                     <input type="hidden" id="editProdId" value=""> 
                     <div class="form-row">
                         <div class="form-group"><label>اسم المنتج:</label><input type="text" id="pName"></div>
@@ -169,7 +172,12 @@
                 <div class="panel">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
                         <h3 style="font-size: 16px;">البضاعة المتوفرة في المستودع</h3>
-                        <button class="btn-excel" onclick="exportInventoryToExcel()">📥 تحميل المستودع كملف Excel</button>
+                        <div style="display:flex; gap:10px;">
+                            <!-- أزرار الإكسل (استيراد وتصدير) -->
+                            <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="importInventoryFromCSV(event)">
+                            <button class="btn-excel btn-import" onclick="document.getElementById('csvFileInput').click()">📤 رفع ملف أسعار (CSV)</button>
+                            <button class="btn-excel" onclick="exportInventoryToExcel()">📥 تصدير المستودع</button>
+                        </div>
                     </div>
                     <div class="table-responsive">
                         <table>
@@ -215,7 +223,7 @@
                     <h2 style="color: var(--primary); margin-bottom: 15px; font-size: 18px;">إعدادات الأمان (تغيير رمز الموظف)</h2>
                     <div class="form-group">
                         <label>الرمز السري الجديد للموظف:</label>
-                        <input type="text" id="newStaffPin" placeholder="أدخل الرمز الجديد (أرقام فقط)">
+                        <input type="password" id="newStaffPin" placeholder="أدخل الرمز الجديد...">
                     </div>
                     <button class="btn-main" onclick="updateStaffPin()" style="background: var(--primary); color:white;">حفظ الرمز الجديد</button>
                 </div>
@@ -238,6 +246,7 @@
     </div>
 
     <script>
+        // مفاتيح الربط مع فايربيز
         const firebaseConfig = {
             apiKey: "AIzaSyDiRdgV5fWxa5ZQJR-GY1BlALrb3AmLHEM",
             authDomain: "lamsa-836.firebaseapp.com",
@@ -258,15 +267,16 @@
         let html5QrCode = null;
         let isScanning = false;
 
-        const ADMIN_PIN = "1234"; // رمز الإدارة الثابت
-        let currentStaffPin = "5678"; // الرمز الافتراضي للموظف
+        // الرموز السرية بحسب طلبك الدقيق
+        const ADMIN_PIN = "2008"; 
+        let currentStaffPin = "2001"; 
 
         // جلب رمز الموظف المخزن سحابياً
         db.ref('settings/staffPin').on('value', (snapshot) => {
             if (snapshot.exists()) {
                 currentStaffPin = snapshot.val();
             } else {
-                db.ref('settings/staffPin').set("5678"); // حفظ الرمز الافتراضي أول مرة
+                db.ref('settings/staffPin').set("2001"); // الرمز الافتراضي للموظف
             }
         });
 
@@ -404,7 +414,7 @@
             document.getElementById('pBuy').value = '';
             document.getElementById('pSell').value = '';
             document.getElementById('pStock').value = '';
-            document.getElementById('formTitle').innerText = "إضافة صنف جديد للمخزون";
+            document.getElementById('formTitle').innerText = "إضافة صنف يدوياً للمخزون";
             document.getElementById('btnSaveProd').innerText = "حفظ المنتج";
             document.getElementById('btnCancelEdit').style.display = "none";
         }
@@ -433,7 +443,51 @@
             });
         }
 
-        // نظام تصدير البيانات إلى ملف Excel (CSV)
+        // --- نظام الإكسل (CSV) المطور ---
+        
+        // 1. استيراد (رفع) ملف إكسل للمستودع
+        function importInventoryFromCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const lines = text.split('\n');
+                let addedCount = 0;
+                
+                // نفترض أن الترتيب في الملف: الباركود, اسم الصنف, سعر الشراء, سعر البيع, الكمية
+                for (let i = 1; i < lines.length; i++) {
+                    if(!lines[i].trim()) continue;
+                    let row = lines[i].replace(/["\r]/g, '').split(','); 
+                    if(row.length < 5) continue;
+                    
+                    let barcode = row[0].trim();
+                    let name = row[1].trim();
+                    let buyPrice = parseFloat(row[2]);
+                    let sellPrice = parseFloat(row[3]);
+                    let stock = parseInt(row[4]);
+                    
+                    if(name && !isNaN(buyPrice) && !isNaN(sellPrice) && !isNaN(stock)) {
+                        let prodId = Date.now() + i; 
+                        db.ref('products/' + prodId).set({
+                            id: prodId,
+                            barcode: barcode,
+                            name: name,
+                            buyPrice: buyPrice,
+                            sellPrice: sellPrice,
+                            stock: stock
+                        });
+                        addedCount++;
+                    }
+                }
+                alert(`تم استيراد ${addedCount} منتج بنجاح إلى المستودع!`);
+                event.target.value = ''; // تصفير زر الرفع
+            };
+            reader.readAsText(file);
+        }
+
+        // 2. تصدير (تحميل) المستودع إلى إكسل
         function exportInventoryToExcel() {
             let csv = '\uFEFFالباركود,اسم الصنف,سعر الشراء,سعر البيع,الكمية\n';
             products.forEach(p => {
@@ -446,6 +500,7 @@
             link.click();
         }
 
+        // 3. تصدير (تحميل) التقارير إلى إكسل
         function exportReportsToExcel() {
             let csv = '\uFEFFالتاريخ,رقم الفاتورة,المنتجات,قيمة المبيع,الربح الصافي\n';
             sales.forEach(s => {
