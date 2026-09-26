@@ -24,7 +24,6 @@
         .form-group input:focus { border-color: #4361ee; }
         .btn-login { background: #4361ee; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .btn-login:hover { background: #3f37c9; }
-        .hint { margin-top: 15px; font-size: 13px; color: #666; }
 
         /* النظام الداخلي */
         .app-container { display: none; height: 100vh; flex-direction: column; }
@@ -81,6 +80,7 @@
         
         .btn-edit { background: #f39c12; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 13px; }
         .btn-delete { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 13px; }
+        .btn-excel { background: #27ae60; color: white; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; display: inline-flex; align-items: center; gap: 5px; }
 
         .table-responsive { width: 100%; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; min-width: 500px; }
@@ -104,35 +104,31 @@
             <h2>لمسة كارز 🚗</h2>
             <div class="form-group">
                 <label>أدخل الرمز السري:</label>
-                <input type="password" id="passInput" placeholder="أدخل رمز الإدارة أو الموظف" onkeyup="checkEnter(event)">
+                <input type="password" id="passInput" placeholder="أدخل الرمز السري..." onkeyup="checkEnter(event)">
             </div>
             <button class="btn-login" onclick="login()">دخول النظام</button>
-            <div class="hint">إدارة: 1234 | موظف: 5678</div>
         </div>
     </div>
 
-    <!-- 2. واجهة التطبيق الرئيسية (تظهر حسب الصلاحية) -->
+    <!-- 2. واجهة التطبيق -->
     <div id="appContainer" class="app-container">
         
-        <!-- القائمة الجانبية -->
         <div class="sidebar" id="sidebarMenu">
             <h2 id="menuTitle">لمسة كارز 🚗</h2>
-            <!-- أزرار الإدارة -->
             <div id="adminNav" style="display:contents;">
                 <button class="nav-btn active" onclick="switchScreen('inventoryScreen', this)">إدارة المستودع</button>
                 <button class="nav-btn" onclick="switchScreen('reportsScreen', this)">جرد الأرباح</button>
+                <button class="nav-btn" onclick="switchScreen('settingsScreen', this)">إعدادات الأمان</button>
             </div>
-            <!-- زر الموظف -->
             <div id="staffNav" style="display:contents;">
                 <button class="nav-btn active" onclick="switchScreen('posScreen', this)">نقطة البيع</button>
             </div>
             <button class="nav-btn btn-logout" onclick="logout()">تسجيل خروج</button>
         </div>
 
-        <!-- المحتوى -->
         <div class="main-content">
             
-            <!-- أ. شاشة نقطة البيع (للموظف والإدارة) -->
+            <!-- أ. نقطة البيع -->
             <div id="posScreen" class="screen pos-layout">
                 <div class="panel">
                     <button class="btn-scan-cam" onclick="toggleScanner()">📷 مسح الباركود عبر الكاميرا</button>
@@ -152,7 +148,7 @@
                 </div>
             </div>
 
-            <!-- ب. شاشة إدارة المستودع (للإدارة فقط) -->
+            <!-- ب. إدارة المستودع -->
             <div id="inventoryScreen" class="screen">
                 <div class="panel" style="border-left: 5px solid var(--primary);">
                     <h2 style="color: var(--primary); margin-bottom: 15px; font-size: 18px;" id="formTitle">إضافة صنف جديد للمخزون</h2>
@@ -171,7 +167,10 @@
                 </div>
 
                 <div class="panel">
-                    <h3 style="margin-bottom: 12px; font-size: 16px;">البضاعة المتوفرة في المستودع</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                        <h3 style="font-size: 16px;">البضاعة المتوفرة في المستودع</h3>
+                        <button class="btn-excel" onclick="exportInventoryToExcel()">📥 تحميل المستودع كملف Excel</button>
+                    </div>
                     <div class="table-responsive">
                         <table>
                             <thead><tr><th>الباركود</th><th>الصنف</th><th>الشراء</th><th>البيع</th><th>الكمية</th><th>إجراءات</th></tr></thead>
@@ -181,10 +180,13 @@
                 </div>
             </div>
 
-            <!-- ج. شاشة التقارير والجرد (للإدارة فقط) -->
+            <!-- ج. التقارير والجرد -->
             <div id="reportsScreen" class="screen">
                 <div class="panel">
-                    <h2 style="font-size: 18px;">جرد المبيعات والأرباح 📊</h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                        <h2 style="font-size: 18px;">جرد المبيعات والأرباح 📊</h2>
+                        <button class="btn-excel" onclick="exportReportsToExcel()">📥 تحميل التقارير كملف Excel</button>
+                    </div>
                     <div style="margin: 15px 0; display: flex; gap: 8px; flex-wrap: wrap;">
                         <button class="nav-btn" onclick="generateReport('daily')" style="width:auto; background:var(--primary)">جرد اليوم</button>
                         <button class="nav-btn" onclick="generateReport('monthly')" style="width:auto; background:var(--secondary)">جرد الشهر</button>
@@ -207,10 +209,22 @@
                 </div>
             </div>
 
+            <!-- د. إعدادات الأمان وتغيير رمز الموظف -->
+            <div id="settingsScreen" class="screen">
+                <div class="panel" style="max-width: 500px; margin: 0 auto;">
+                    <h2 style="color: var(--primary); margin-bottom: 15px; font-size: 18px;">إعدادات الأمان (تغيير رمز الموظف)</h2>
+                    <div class="form-group">
+                        <label>الرمز السري الجديد للموظف:</label>
+                        <input type="text" id="newStaffPin" placeholder="أدخل الرمز الجديد (أرقام فقط)">
+                    </div>
+                    <button class="btn-main" onclick="updateStaffPin()" style="background: var(--primary); color:white;">حفظ الرمز الجديد</button>
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <!-- قالب طباعة الفاتورة -->
+    <!-- طباعة الفاتورة -->
     <div id="invoicePrint">
         <h1>لمسة كارز زينة سيارات</h1>
         <p>التاريخ: <span id="invDate"></span></p>
@@ -244,22 +258,28 @@
         let html5QrCode = null;
         let isScanning = false;
 
-        const ADMIN_PIN = "1234";
-        const STAFF_PIN = "5678";
+        const ADMIN_PIN = "1234"; // رمز الإدارة الثابت
+        let currentStaffPin = "5678"; // الرمز الافتراضي للموظف
 
-        // التحقق من تسجيل الدخول
+        // جلب رمز الموظف المخزن سحابياً
+        db.ref('settings/staffPin').on('value', (snapshot) => {
+            if (snapshot.exists()) {
+                currentStaffPin = snapshot.val();
+            } else {
+                db.ref('settings/staffPin').set("5678"); // حفظ الرمز الافتراضي أول مرة
+            }
+        });
+
         function login() {
             const pin = document.getElementById('passInput').value.trim();
             if (pin === ADMIN_PIN) {
-                // فتح واجهة الإدارة
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('appContainer').style.display = 'flex';
                 document.getElementById('adminNav').style.display = 'contents';
                 document.getElementById('staffNav').style.display = 'none';
                 document.getElementById('menuTitle').innerText = "لوحة الإدارة 🛠️";
                 switchScreen('inventoryScreen');
-            } else if (pin === STAFF_PIN) {
-                // فتح واجهة الموظف (بيع فقط)
+            } else if (pin === currentStaffPin) {
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('appContainer').style.display = 'flex';
                 document.getElementById('adminNav').style.display = 'none';
@@ -280,7 +300,16 @@
             stopScanner();
         }
 
-        // جلب البيانات سحابياً
+        function updateStaffPin() {
+            const newPin = document.getElementById('newStaffPin').value.trim();
+            if(!newPin) return alert('يرجى كتابة الرمز الجديد!');
+            db.ref('settings/staffPin').set(newPin).then(() => {
+                alert('تم تحديث رمز الموظف بنجاح وأصبح فعالاً!');
+                document.getElementById('newStaffPin').value = '';
+            });
+        }
+
+        // جلب البيانات
         db.ref('products').on('value', (snapshot) => {
             const data = snapshot.val();
             products = data ? Object.values(data) : [];
@@ -335,7 +364,7 @@
             else { alert('المنتج غير مسجل برقم الباركود: ' + code); }
         }
 
-        // إدارة المستودع (للإدارة)
+        // إدارة المستودع
         function saveProduct() {
             const idToEdit = document.getElementById('editProdId').value;
             const name = document.getElementById('pName').value;
@@ -402,6 +431,32 @@
                         </td>
                     </tr>`;
             });
+        }
+
+        // نظام تصدير البيانات إلى ملف Excel (CSV)
+        function exportInventoryToExcel() {
+            let csv = '\uFEFFالباركود,اسم الصنف,سعر الشراء,سعر البيع,الكمية\n';
+            products.forEach(p => {
+                csv += `"${p.barcode || 'بدون'}","${p.name}",${p.buyPrice},${p.sellPrice},${p.stock}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "Inventory_LamsetCars.csv";
+            link.click();
+        }
+
+        function exportReportsToExcel() {
+            let csv = '\uFEFFالتاريخ,رقم الفاتورة,المنتجات,قيمة المبيع,الربح الصافي\n';
+            sales.forEach(s => {
+                let itemsNames = s.items.map(i => i.name + ' (x'+i.qty+')').join(' - ');
+                csv += `"${new Date(s.date).toLocaleDateString('ar-EG')}","#${s.id}","${itemsNames}",${s.total},${s.profit}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "Sales_Reports_LamsetCars.csv";
+            link.click();
         }
 
         // نقاط البيع
