@@ -58,13 +58,19 @@
         .btn-scan-cam { background: var(--warning); color: white; border: none; padding: 12px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 15px; }
         #reader { width: 100%; max-width: 400px; margin: 0 auto 15px auto; display: none; border-radius: 10px; overflow: hidden; border: 2px solid var(--primary); }
 
-        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; max-height: 250px; overflow-y: auto; }
-        @media (min-width: 992px) { .products-grid { max-height: none; flex: 1; } }
-        .product-card { background: var(--light); padding: 12px; border-radius: 10px; text-align: center; cursor: pointer; border: 2px solid transparent; transition: 0.3s; position: relative; }
-        .product-card:hover { border-color: var(--primary); transform: translateY(-3px); background: white; }
-        .product-card h4 { margin-bottom: 5px; font-size: 14px; }
-        .product-card .price { color: var(--primary); font-weight: 800; font-size: 16px; }
-        .product-card .stock-badge { position: absolute; top: -8px; right: -8px; background: var(--warning); color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px; font-weight: bold;}
+        /* تعديل تصميم المنتجات لتصبح سطوراً عرضية (نظام List / Excel) */
+        .products-list { display: flex; flex-direction: column; gap: 8px; max-height: 350px; overflow-y: auto; padding-right: 5px; }
+        @media (min-width: 992px) { .products-list { max-height: none; flex: 1; } }
+        
+        .product-list-item { 
+            background: white; padding: 12px 15px; border-radius: 8px; cursor: pointer; 
+            border: 1px solid #e2e8f0; transition: 0.2s; display: flex; 
+            justify-content: space-between; align-items: center; 
+        }
+        .product-list-item:hover { border-color: var(--primary); background: var(--light); transform: translateX(-3px); }
+        .product-list-item h4 { margin: 0; font-size: 15px; flex: 2; text-align: right; color: var(--dark); font-weight: 700; }
+        .product-list-item .stock-badge { background: var(--warning); color: white; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; flex: 1; text-align: center; margin: 0 10px; }
+        .product-list-item .price { color: var(--primary); font-weight: 800; font-size: 16px; flex: 1; text-align: left; }
 
         .cart-items { flex: 1; overflow-y: auto; max-height: 180px; margin-bottom: 15px; }
         @media (min-width: 992px) { .cart-items { max-height: none; } }
@@ -140,7 +146,8 @@
                         <input type="text" id="barcodeInput" class="barcode-input" placeholder="امسح الباركود يدوياً..." onkeyup="handleBarcodeScan(event)">
                         <input type="text" id="searchInput" class="search-bar" placeholder="ابحث باسم المنتج..." onkeyup="searchProducts()">
                     </div>
-                    <div class="products-grid" id="productsGrid"></div>
+                    <!-- تم تغيير الكلاس إلى قائمة السطور -->
+                    <div class="products-list" id="productsGrid"></div>
                 </div>
                 <div class="panel">
                     <h3 style="border-bottom: 2px solid #eee; padding-bottom: 8px; margin-bottom: 12px; font-size: 16px;">الفاتورة الحالية</h3>
@@ -173,7 +180,6 @@
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
                         <h3 style="font-size: 16px;">البضاعة المتوفرة في المستودع</h3>
                         <div style="display:flex; gap:10px;">
-                            <!-- أزرار الإكسل (استيراد وتصدير) -->
                             <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="importInventoryFromCSV(event)">
                             <button class="btn-excel btn-import" onclick="document.getElementById('csvFileInput').click()">📤 رفع ملف أسعار (CSV)</button>
                             <button class="btn-excel" onclick="exportInventoryToExcel()">📥 تصدير المستودع</button>
@@ -267,7 +273,7 @@
         let html5QrCode = null;
         let isScanning = false;
 
-        // الرموز السرية بحسب طلبك الدقيق
+        // الرموز السرية كما طلبت
         const ADMIN_PIN = "2008"; 
         let currentStaffPin = "2001"; 
 
@@ -445,7 +451,6 @@
 
         // --- نظام الإكسل (CSV) المطور ---
         
-        // 1. استيراد (رفع) ملف إكسل للمستودع
         function importInventoryFromCSV(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -456,7 +461,6 @@
                 const lines = text.split('\n');
                 let addedCount = 0;
                 
-                // نفترض أن الترتيب في الملف: الباركود, اسم الصنف, سعر الشراء, سعر البيع, الكمية
                 for (let i = 1; i < lines.length; i++) {
                     if(!lines[i].trim()) continue;
                     let row = lines[i].replace(/["\r]/g, '').split(','); 
@@ -482,12 +486,11 @@
                     }
                 }
                 alert(`تم استيراد ${addedCount} منتج بنجاح إلى المستودع!`);
-                event.target.value = ''; // تصفير زر الرفع
+                event.target.value = ''; 
             };
             reader.readAsText(file);
         }
 
-        // 2. تصدير (تحميل) المستودع إلى إكسل
         function exportInventoryToExcel() {
             let csv = '\uFEFFالباركود,اسم الصنف,سعر الشراء,سعر البيع,الكمية\n';
             products.forEach(p => {
@@ -500,7 +503,6 @@
             link.click();
         }
 
-        // 3. تصدير (تحميل) التقارير إلى إكسل
         function exportReportsToExcel() {
             let csv = '\uFEFFالتاريخ,رقم الفاتورة,المنتجات,قيمة المبيع,الربح الصافي\n';
             sales.forEach(s => {
@@ -514,29 +516,20 @@
             link.click();
         }
 
-        // نقاط البيع
-        function handleBarcodeScan(event) {
-            if (event.key === 'Enter') {
-                const code = event.target.value.trim();
-                if (!code) return;
-                handleScannedCode(code);
-                event.target.value = '';
-            }
-        }
-
+        // عرض المنتجات كـ سطور (List)
         function renderProducts(filterText = '') {
             const grid = document.getElementById('productsGrid');
             if(!grid) return;
             grid.innerHTML = '';
             products.filter(p => p.name.includes(filterText)).forEach(p => {
-                const card = document.createElement('div');
-                card.className = 'product-card';
-                card.onclick = () => addToCart(p);
-                card.innerHTML = `
-                    <span class="stock-badge">${p.stock} متوفر</span>
+                const item = document.createElement('div');
+                item.className = 'product-list-item';
+                item.onclick = () => addToCart(p);
+                item.innerHTML = `
                     <h4>${p.name}</h4>
+                    <span class="stock-badge">${p.stock} متوفر</span>
                     <div class="price">${p.sellPrice} $</div>`;
-                grid.appendChild(card);
+                grid.appendChild(item);
             });
         }
 
